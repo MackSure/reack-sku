@@ -1,0 +1,158 @@
+<!doc html>
+<html>
+<body>
+<script>
+    function setExpire() {
+        const date = new Date().getTime();
+        let expire = localStorage.getItem('expire');
+        if (expire && expire <= date) {
+            localStorage.removeItem('data');
+        } else if (!expire) {
+            const expireDate = date + 15 * 24 * 60 * 60 * 1000;
+            localStorage.setItem('expire', expireDate);
+        }
+    };
+
+    setExpire();
+</script>
+</body>
+
+<script>
+    function MyPromise(constructor) {
+        let self = this;
+        self.status = 'pending';
+        self.value = undefined;
+        self.reason = undefined;
+        self.onFullfilledArray = [];
+        self.onRejectedArray = [];
+        function resolve(value) {
+            if (self.status === 'pending') {
+                self.value = value;
+                self.status = 'resolved';
+                self.onFullfilledArray.forEach(function (f) {
+                    f(self.value);
+                })
+            }
+        }
+
+        function reject(reason) {
+            if (self.status === 'pending') {
+                self.reason = reason;
+                self.status = 'rejected';
+                self.onRejectedArray.forEach(function (f) {
+                    f(self.reason);
+                })
+            }
+        }
+
+        function resolvePromise(promise,x,resolve,reject){
+            if(promise===x){
+                throw new TypeError("type error")
+            }
+            let isUsed;
+            if(x!==null&&(typeof x==="object"||typeof x==="function")){
+                try{
+                    let then=x.then;
+                    if(typeof then==="function"){
+                        //是一个promise的情况
+                        then.call(x,function(y){
+                            if(isUsed)return;
+                            isUsed=true;
+                            resolvePromise(promise,y,resolve,reject);
+                        },function(e){
+                            if(isUsed)return;
+                            isUsed=true;
+                            reject(e);
+                        })
+                    }else{
+                        //仅仅是一个函数或者是对象
+                        resolve(x)
+                    }
+                }catch(e){
+                    if(isUsed)return;
+                    isUsed=true;
+                    reject(e);
+                }
+            }else{
+                //返回的基本类型，直接resolve
+                resolve(x)
+            }
+        }
+
+        try {
+            constructor(resolve, reject);
+        } catch(e) {
+            reject(e);
+        }
+    }
+
+    MyPromise.prototype.then = function (onFullfilled, onRejected) {
+
+        let self = this;
+        let promise2;
+        switch(self.status) {
+            case 'pending':
+                promise2 = new MyPromise(function (resolve, reject) {
+                    self.onFullfilledArray.push(function () {
+                        try {
+                            let temple = onFullfilled(self.value);
+                            resolve(temple);
+                        } catch (e) {
+                            reject(e);
+                        }
+
+                    });
+                    self.onRejectedArray.push(function (resolve, reject) {
+                        try {
+                            let temple = onRejected(self.reason);
+                            reject(temple);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    });
+                });
+
+                break;
+            case 'resolved':
+                promise2=new MyPromise(function(resolve,reject){
+                    try{
+                        let temple=onFullfilled(self.value);
+                        //将上次一then里面的方法传递进下一个Promise的状态
+                        resolve(temple);
+                    }catch(e){
+                        reject(e);//error catch
+                    }
+                })
+                break;
+            case 'rejected':
+                promise2=new MyPromise(function(resolve,reject){
+                    try{
+                        let temple=onRejected(self.reason);
+                        //将then里面的方法传递到下一个Promise的状态里
+                        resolve(temple);
+                    }catch(e){
+                        reject(e);
+                    }
+                });
+                 break;
+            default:
+        }
+        return promise2;
+    };
+
+    const promise = new MyPromise(function (resolve, reject) {
+        setTimeout(function () {
+            resolve(44);
+        }, 1000);
+    });
+    promise.then(function (value) {
+        console.log(value)
+        return value;
+    }).then(function (value) {
+        console.log(value);
+    });
+</script>
+
+
+
+</html>

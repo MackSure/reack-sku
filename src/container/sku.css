@@ -1,0 +1,30 @@
+.specWrapper {
+    width: 100vw;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    margin: 20px 15px;
+}
+
+.specItem {
+    color: #333;
+    border-bottom: 1px solid #999;
+}
+
+.specTitle {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.specValue {
+    display: inline-block;
+    width: 80px;
+    height: 30px;
+    line-height: 30px;
+    margin: 10px;
+    color: #666;
+    border: 1px solid #666;
+    border-radius: 5px;
+    text-align: center;
+}
